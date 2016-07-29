@@ -45,8 +45,8 @@ start_link(Opts) ->
 
 init([Opts]) ->
     Bucket = proplists:get_value(bucket, Opts),
-    Ttl = proplists:get_value(ttl, Opts, 10),
-    CheckTimeout = proplists:get_value(check_timeout, Opts, 1) * 1000,
+    Ttl = proplists:get_value(ttl, Opts, 10000),
+    CheckTimeout = proplists:get_value(check_timeout, Opts, 1000),
     Table = ets:new(Bucket, [set,
         compressed,
         public,
@@ -104,4 +104,4 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal helpers
 
 now_unixtime() ->
-    erlang:convert_time_unit(erlang:system_time(), native, seconds).
+    erlang:convert_time_unit(erlang:system_time(), native, milli_seconds).
