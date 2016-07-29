@@ -20,7 +20,7 @@
 %%% API
 -spec put(pid(), any(), any()) -> ok | {error, timeout}.
 put(Server, Key, Value) ->
-    gen_server:call(Server, {put, Key, Value}, ?TIMEOUT).
+    gen_server:call(Server, {put, Key, Value, undefined}, ?TIMEOUT).
 put(Server, Key, Value, Ttl) ->
     gen_server:call(Server, {put, Key, Value, Ttl}, ?TIMEOUT).
 
@@ -62,6 +62,8 @@ init([Opts]) ->
 
 handle_call({put, Key, Value}, _From, #state{ttl=Ttl} = State) ->
     handle_call({put, Key, Value, Ttl}, _From, State);
+handle_call({put, Key, Value, undefined}, _From, #state{ttl=Ttl} = State) ->
+    handle_call({put, Key, Value, Ttl}, _From, State) ;
 handle_call({put, Key, Value, Ttl}, _From, #state{table=Table} = State) ->
     Field = #field{key=Key, value=Value, last_time_updated=now_unixtime(), ttl = Ttl},
     true = ets:insert(Table, Field),
