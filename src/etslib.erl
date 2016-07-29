@@ -12,7 +12,7 @@
     handle_info/2,
     terminate/2, code_change/3]).
 
--record(field, {key, value, last_time_updated}).
+-record(field, {key, value, last_time_updated, ttl}).
 -record(state, {table, ttl, check_timeout}).
 
 -define(TIMEOUT, 5000).
@@ -58,8 +58,10 @@ init([Opts]) ->
     },
     {ok, State}.
 
-handle_call({put, Key, Value}, _From, #state{table=Table} = State) ->
-    Field = #field{key=Key, value=Value, last_time_updated=now_unixtime()},
+handle_call({put, Key, Value}, _From, #state{ttl=Ttl} = State) ->
+    handle_call({put, Key, Value, Ttl}, _From, State);
+handle_call({put, Key, Value, Ttl}, _From, #state{table=Table} = State) ->
+    Field = #field{key=Key, value=Value, last_time_updated=now_unixtime(), ttl = Ttl},
     true = ets:insert(Table, Field),
     {reply, ok, State};
 handle_call({get, Key}, _From, #state{table=Table} = State) ->
@@ -80,9 +82,9 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_info(clean_old, #state{table=Table, ttl=Ttl, check_timeout=CheckTimeout} = State) ->
+handle_info(clean_old, #state{table=Table, check_timeout=CheckTimeout} = State) ->
     NowTime = now_unixtime(),
-    Ms = ets:fun2ms(fun(#field{last_time_updated=Time}) when Time + Ttl < NowTime -> true end),
+    Ms = ets:fun2ms(fun(#field{last_time_updated=Time, ttl=Ttl}) when Time + Ttl < NowTime -> true end),
     ets:select_delete(Table, Ms),
     timer:send_after(CheckTimeout, clean_old),
     {noreply, State};
