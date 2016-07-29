@@ -4,7 +4,7 @@
 -include_lib("stdlib/include/ms_transform.hrl").
 
 -export([start_link/1]).
--export([put/3, get/2, delete/2]).
+-export([put/3, put/4, get/2, delete/2]).
 
 -export([init/1,
     handle_call/3,
@@ -21,6 +21,8 @@
 -spec put(pid(), any(), any()) -> ok | {error, timeout}.
 put(Server, Key, Value) ->
     gen_server:call(Server, {put, Key, Value}, ?TIMEOUT).
+put(Server, Key, Value, Ttl) ->
+    gen_server:call(Server, {put, Key, Value, Ttl}, ?TIMEOUT).
 
 -spec get(pid(), any()) -> {ok, any()} | {error, undefined} | {error, timeout}.
 get(Server, Key) ->
