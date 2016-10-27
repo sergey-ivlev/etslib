@@ -4,7 +4,7 @@
 -include_lib("stdlib/include/ms_transform.hrl").
 
 -export([start_link/1]).
--export([put/3, put/4, get/2, delete/2]).
+-export([put/3, put/4, get/2, delete/2, state/1]).
 
 -export([init/1,
     handle_call/3,
@@ -27,6 +27,9 @@ put(Server, Key, Value, Ttl) ->
 -spec get(pid(), any()) -> {ok, any()} | {error, undefined} | {error, timeout}.
 get(Server, Key) ->
     gen_server:call(Server, {get, Key}, ?TIMEOUT).
+
+state(Server) ->
+    gen_server:call(Server, state, ?TIMEOUT).
 
 delete(Server, Key) ->
     gen_server:call(Server, {delete, Key}, ?TIMEOUT).
@@ -79,6 +82,9 @@ handle_call({get, Key}, _From, #state{table=Table} = State) ->
 handle_call({delete, Key}, _From, #state{table=Table} = State) ->
     true = ets:delete(Table, Key),
     {reply, ok, State};
+handle_call(state, _From, #state{table=Table} = State) ->
+    List = ets:tab2list(Table),
+    {reply, List, State};
 handle_call(_Request, _From, State) ->
     Reply = {error, unknow_req},
     {reply, Reply, State}.
